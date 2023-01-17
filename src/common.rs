@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+#[derive(Component)]
+pub struct Readiness(pub bool);
+
 pub struct Special {
     pub strength: u8,
     pub perception: u8,
