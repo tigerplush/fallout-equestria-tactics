@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use bevy_renet::{renet::{RenetClient, RenetConnectionConfig, ClientAuthentication, DefaultChannel}, RenetClientPlugin};
 
-use crate::{PROTOCOL_ID, messages::ServerMessage, handle_errors};
+use crate::{PROTOCOL_ID, messages::ServerMessage, handle_errors, common::{PlayerName}};
 
 pub struct FoEClientPlugin;
 
@@ -39,12 +39,28 @@ impl FoEClient {
             authentication).unwrap()
     }
 
-    fn handle_messages(mut client: ResMut<RenetClient>) {
+    fn handle_messages(
+        mut client: ResMut<RenetClient>,
+        mut commands: Commands
+    ) {
         while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
             let server_message = bincode::deserialize(&message).unwrap();
             match server_message {
                 ServerMessage::PlayerConnected(id) => info!("{} connected", id),
                 ServerMessage::PlayerDisconnected(id) => info!("{} disconnected", id),
+                _ => (),
+            }
+        }
+
+        while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
+            let server_message = bincode::deserialize(&message).unwrap();
+            match server_message {
+                ServerMessage::PlayerName(name) => {
+                    
+                    info!("{} received the name {}", client.client_id(), name);
+                    commands.insert_resource(PlayerName(name));
+                },
+                _ => (),
             }
         }
     }
