@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_renet::{RenetServerPlugin, renet::{RenetServer, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent, DefaultChannel}};
 use bevy_turborand::prelude::*;
 
-use crate::{PROTOCOL_ID, messages::ServerMessage, handle_errors, resources::NamesHandle, assets::Names};
+use crate::{PROTOCOL_ID, messages::{ServerMessage, ClientMessage}, handle_errors, resources::NamesHandle, assets::Names};
 
 pub struct FoEServerPlugin;
 
@@ -11,7 +11,8 @@ impl Plugin for FoEServerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(FoEServer::new());
         app.add_plugin(RenetServerPlugin::default());
-        app.add_system(FoEServer::handle_messages);
+        app.add_system(FoEServer::handle_server_messages);
+        app.add_system(FoEServer::handle_client_messages);
         app.add_system(handle_errors);
     }
 }
@@ -33,7 +34,7 @@ impl FoEServer {
         ).unwrap()
     }
 
-    fn handle_messages(
+    fn handle_server_messages(
         mut server_events: EventReader<ServerEvent>,
         mut server: ResMut<RenetServer>,
         mut rng: ResMut<GlobalRng>,
@@ -59,6 +60,20 @@ impl FoEServer {
                     info!("{} disconnected", id);
                     let message = bincode::serialize(&ServerMessage::PlayerDisconnected(*id)).unwrap();
                     server.broadcast_message(DefaultChannel::Reliable, message);
+                }
+            }
+        }
+    }
+
+    fn handle_client_messages(
+        mut server: ResMut<RenetServer>,
+    ) {
+        for client_id in server.clients_id().into_iter() {
+            while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
+                let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
+                match client_message {
+                    ClientMessage::ClientReady => info!("Player {} reports readiness", client_id),
+                    _ => ()
                 }
             }
         }
