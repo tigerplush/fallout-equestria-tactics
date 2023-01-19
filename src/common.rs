@@ -3,6 +3,12 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Readiness(pub bool);
 
+#[derive(Component)]
+pub struct Player;
+
+#[derive(Component)]
+pub struct CurrentPlayer;
+
 pub struct Special {
     pub strength: u8,
     pub perception: u8,
@@ -37,6 +43,3 @@ pub enum Race {
     Unicorn,
     Pegasus,
 }
-
-#[derive(Resource)]
-pub struct PlayerName(pub String);

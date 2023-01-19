@@ -9,8 +9,8 @@ pub enum ServerMessage {
     PlayerTurn(u64),
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ClientMessage {
     ClientReady,
+    EndTurn,
 }
