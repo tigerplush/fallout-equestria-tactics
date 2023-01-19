@@ -6,8 +6,10 @@ use bevy_turborand::prelude::*;
 use bevy_common_assets::json::JsonAssetPlugin;
 
 use fallout_equestria_tactics::assets::Names;
-use fallout_equestria_tactics::foe_server_plugin::FoEServerPlugin;
 use fallout_equestria_tactics::resources::{NamesHandle, Players};
+
+mod server_plugin;
+use server_plugin::*;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 enum ServerState {
@@ -23,7 +25,7 @@ fn main() {
     .add_plugin(AssetPlugin::default())
     .add_plugin(JsonAssetPlugin::<Names>::new(&["json.names"]))
     .add_plugin(LogPlugin::default())
-    .add_plugin(FoEServerPlugin)
+    .add_plugin(ServerPlugin)
     .add_plugin(RngPlugin::default())
     .add_startup_system(setup);
 

@@ -3,17 +3,14 @@ use std::{time::SystemTime, net::UdpSocket};
 use bevy::prelude::*;
 
 use bevy_renet::{renet::{RenetClient, RenetConnectionConfig, ClientAuthentication, DefaultChannel}, RenetClientPlugin};
+use fallout_equestria_tactics::{PROTOCOL_ID, messages::ServerMessage, common::PlayerName};
+pub struct ClientPlugin;
 
-use crate::{PROTOCOL_ID, messages::ServerMessage, handle_errors, common::{PlayerName}};
-
-pub struct FoEClientPlugin;
-
-impl Plugin for FoEClientPlugin {
+impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default());
         app.insert_resource(FoEClient::new());
         app.add_system(FoEClient::handle_messages);
-        app.add_system(handle_errors);
     }
 }
 

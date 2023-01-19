@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 use bevy_renet::renet::{RenetClient, DefaultChannel};
-use fallout_equestria_tactics::{foe_client_plugin::FoEClientPlugin, messages::ClientMessage};
+use fallout_equestria_tactics::messages::ClientMessage;
+
+mod client_plugin;
+use client_plugin::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(FoEClientPlugin)
+        .add_plugin(ClientPlugin)
         .add_startup_system(setup)
         .add_system(handle_button)
         .run();

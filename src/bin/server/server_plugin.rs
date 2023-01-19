@@ -2,17 +2,16 @@ use std::{time::SystemTime, net::UdpSocket, fs::read};
 use bevy::prelude::*;
 use bevy_renet::{RenetServerPlugin, renet::{RenetServer, RenetConnectionConfig, ServerConfig, ServerAuthentication, ServerEvent, DefaultChannel}};
 use bevy_turborand::prelude::*;
+use fallout_equestria_tactics::{PROTOCOL_ID, resources::{NamesHandle, Players}, assets::Names, messages::{ServerMessage, ClientMessage}, common::Readiness};
 
-use crate::{PROTOCOL_ID, messages::{ServerMessage, ClientMessage}, handle_errors, resources::{NamesHandle, Players}, assets::Names, common::{Readiness}};
-pub struct FoEServerPlugin;
+pub struct ServerPlugin;
 
-impl Plugin for FoEServerPlugin {
+impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(FoEServer::new());
         app.add_plugin(RenetServerPlugin::default());
         app.add_system(FoEServer::handle_server_messages);
         app.add_system(FoEServer::handle_client_messages);
-        app.add_system(handle_errors);
     }
 }
 
