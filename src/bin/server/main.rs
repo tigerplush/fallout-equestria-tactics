@@ -1,8 +1,12 @@
+use std::time::Duration;
+
+use bevy::app::ScheduleRunnerSettings;
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_common_assets::json::JsonAssetPlugin;
 use bevy_turborand::prelude::*;
 
 use fallout_equestria_tactics::assets::Names;
+use fallout_equestria_tactics::map::Map;
 use fallout_equestria_tactics::resources::{NamesHandle, Players, TurnOrder};
 
 mod server_plugin;
@@ -16,6 +20,10 @@ fn main() {
     app.add_state(ServerState::WaitingForPlayers)
         .insert_resource(Players::new())
         .insert_resource(TurnOrder::new())
+        .insert_resource(Map::generate(20, 20))
+        .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_secs_f64(
+            1.0 / 60.0,
+        )))
         .add_plugins(MinimalPlugins)
         .add_plugin(AssetPlugin::default())
         .add_plugin(JsonAssetPlugin::<Names>::new(&["json.names"]))

@@ -1,5 +1,6 @@
 pub mod assets;
 pub mod common;
+pub mod map;
 pub mod messages;
 pub mod resources;
 

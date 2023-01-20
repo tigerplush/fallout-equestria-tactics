@@ -37,6 +37,8 @@ impl Plugin for ServerPlugin {
                     .with_system(handle_new_turn)
             )
             .add_system_set(
+                //todo: this should be on enter, but changing a state on enter crashes
+                // maybe resetting a state works? eliminate NextTurn altogether?
                 SystemSet::on_update(ServerState::NextTurn)
                     .with_system(next_turn)
             );
