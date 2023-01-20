@@ -1,5 +1,3 @@
-use std::future::Ready;
-
 use bevy::prelude::*;
 use bevy_renet::renet::{RenetClient, DefaultChannel};
 use fallout_equestria_tactics::messages::ClientMessage;

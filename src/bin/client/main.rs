@@ -1,9 +1,4 @@
 use bevy::prelude::*;
-use bevy_renet::{
-    renet::{DefaultChannel, RenetClient},
-    run_if_client_connected,
-};
-use fallout_equestria_tactics::messages::ClientMessage;
 
 mod client_plugin;
 use client_plugin::*;

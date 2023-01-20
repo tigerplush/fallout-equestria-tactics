@@ -9,8 +9,7 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use bevy_turborand::GlobalRng;
-use rand::seq::{IteratorRandom, SliceRandom};
+use rand::seq::SliceRandom;
 
 use fallout_equestria_tactics::{
     common::{Readiness, CurrentPlayer},
@@ -131,7 +130,6 @@ fn handle_client_messages(
                         app_state.set(ServerState::NextTurn).unwrap();
                         return;
                     }
-                    _ => (),
                 }
             }
         }
