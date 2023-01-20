@@ -6,8 +6,8 @@ pub struct Readiness(pub bool);
 #[derive(Component)]
 pub struct Player;
 
-#[derive(Component)]
-pub struct CurrentPlayer;
+#[derive(Component, Deref, DerefMut)]
+pub struct CurrentPlayer(pub u64);
 
 pub struct Special {
     pub strength: u8,

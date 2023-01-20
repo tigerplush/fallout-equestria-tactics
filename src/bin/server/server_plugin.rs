@@ -36,6 +36,10 @@ impl Plugin for ServerPlugin {
             .add_system_set(
                 SystemSet::on_enter(ServerState::PlayerTurn)
                     .with_system(handle_new_turn)
+            )
+            .add_system_set(
+                SystemSet::on_update(ServerState::NextTurn)
+                    .with_system(next_turn)
             );
     }
 }
@@ -102,6 +106,7 @@ fn handle_client_messages(
     mut server: ResMut<RenetServer>,
     players: Res<Players>,
     mut query: Query<&mut Readiness>,
+    mut app_state: ResMut<State<ServerState>>
 ) {
     for client_id in server.clients_id().into_iter() {
         if let Some(entity) = players.players.get(&client_id) {
@@ -121,6 +126,10 @@ fn handle_client_messages(
                                 false => "un",
                             }
                         );
+                    }
+                    ClientMessage::EndTurn => {
+                        app_state.set(ServerState::NextTurn).unwrap();
+                        return;
                     }
                     _ => (),
                 }
@@ -145,32 +154,34 @@ fn handle_readiness(
     }
 }
 
+/// Runs once when PlayerTurn is entered
 fn handle_new_turn(
-    app_state: Res<State<ServerState>>,
     mut server: ResMut<RenetServer>,
     mut turn_order: ResMut<TurnOrder>,
     players: Res<Players>,
     mut commands: Commands,
-    query: Query<Entity, With<CurrentPlayer>>,
+    query: Query<(Entity, &CurrentPlayer)>,
 ) {
     info!("handling new turn");
-    match app_state.current() {
-        ServerState::PlayerTurn => {
-            if let Some(player) = turn_order.order.pop_front() {
-                info!("It's {}'s turn", player);
-                for current_player in &query {
-                    commands.entity(current_player).remove::<CurrentPlayer>();
-                }
-                if let Some(entity) = players.players.get(&player) {
-                    commands.entity(*entity).insert(CurrentPlayer);
-                }
-                let message = bincode::serialize(&ServerMessage::PlayerTurn(player)).unwrap();
-                server.broadcast_message(DefaultChannel::Reliable, message);
-            }
-            else {
-                error!("Turn order is empty");
-            }
+    if let Some(next_player) = turn_order.order.pop_front() {
+        info!("It's {}'s turn", next_player);
+        for (current_player_entity, current_player) in &query {
+            commands.entity(current_player_entity).remove::<CurrentPlayer>();
+            turn_order.order.push_back(current_player.0);
         }
-        _ => error!("Somehow an empty server started"),
+        if let Some(entity) = players.players.get(&next_player) {
+            commands.entity(*entity).insert(CurrentPlayer(next_player));
+        }
+        let message = bincode::serialize(&ServerMessage::PlayerTurn(next_player)).unwrap();
+        server.broadcast_message(DefaultChannel::Reliable, message);
     }
+    else {
+        error!("Turn order is empty");
+    }
+}
+
+fn next_turn(
+    mut app_state: ResMut<State<ServerState>>,
+) {
+    app_state.set(ServerState::PlayerTurn).unwrap();
 }
