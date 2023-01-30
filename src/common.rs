@@ -4,6 +4,9 @@ use bevy::prelude::*;
 pub struct Readiness(pub bool);
 
 #[derive(Component)]
+pub struct LevelLoaded(pub bool);
+
+#[derive(Component)]
 pub struct Player;
 
 #[derive(Component, Deref, DerefMut)]

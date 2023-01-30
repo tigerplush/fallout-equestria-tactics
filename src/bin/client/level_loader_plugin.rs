@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use bevy_renet::renet::{RenetClient, DefaultChannel};
 use bevy_scene_hook::*;
 
-use fallout_equestria_tactics::{common::Spawnpoint, resources::LevelName};
+use fallout_equestria_tactics::{common::Spawnpoint, resources::LevelName, messages::ClientMessage};
 
 use crate::common::ClientState;
 
@@ -52,6 +53,9 @@ fn update_state(
     app_state.set(ClientState::Idling).unwrap();
 }
 
-fn notify_server() {
-
+fn notify_server(
+    mut client: ResMut<RenetClient>,
+) {
+    let message = bincode::serialize(&ClientMessage::LevelLoaded).unwrap();
+    client.send_message(DefaultChannel::Reliable, message);
 }

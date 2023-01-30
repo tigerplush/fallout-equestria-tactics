@@ -16,6 +16,7 @@ pub enum ClientMessage {
     ClientReady,
     ChangeName(String),
     EndTurn,
+    LevelLoaded,
 }
 
 pub enum ChatMessage {

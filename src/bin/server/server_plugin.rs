@@ -1,6 +1,6 @@
 use std::{net::UdpSocket, time::SystemTime, collections::VecDeque, io::Read};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, log::Level};
 use bevy_renet::{
     renet::{
         DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig,
@@ -12,7 +12,7 @@ use bevy_renet::{
 use rand::seq::SliceRandom;
 
 use fallout_equestria_tactics::{
-    common::{Readiness, CurrentPlayer},
+    common::{Readiness, CurrentPlayer, LevelLoaded},
     messages::{ClientMessage, ServerMessage},
     resources::{Players, TurnOrder},
     PROTOCOL_ID,
@@ -36,6 +36,10 @@ impl Plugin for ServerPlugin {
             .add_system_set(
                 SystemSet::on_enter(ServerState::WaitingForPlayerLoadLevel)
                     .with_system(notify_players_load_level)
+            )
+            .add_system_set(
+                SystemSet::on_update(ServerState::WaitingForPlayerLoadLevel)
+                    .with_system(handle_level_loaded)
             )
             .add_system_set(
                 SystemSet::on_enter(ServerState::PlayerTurn)
@@ -117,6 +121,7 @@ fn handle_reliable_messages(
     players: Res<Players>,
     mut query: Query<&mut Readiness>,
     mut app_state: ResMut<State<ServerState>>,
+    mut level_loaded_query: Query<&mut LevelLoaded>,
 ) {
     for client_id in server.clients_id().into_iter() {
         if let Some(&entity) = players.get(&client_id) {
@@ -140,6 +145,14 @@ fn handle_reliable_messages(
                     ClientMessage::EndTurn => {
                         app_state.set(ServerState::NextTurn).unwrap();
                         return;
+                    }
+                    ClientMessage::LevelLoaded => {
+                        let mut level_loaded = level_loaded_query.get_mut(entity).unwrap();
+                        level_loaded.0 = true;
+                        info!(
+                            "Player {} reports level loaded",
+                            client_id,
+                        );
                     }
                     _ => ()
                 }
@@ -177,17 +190,27 @@ fn handle_unreliable_messages(
 fn handle_readiness(
     query: Query<&Readiness>,
     mut app_state: ResMut<State<ServerState>>,
+) {
+    if query.iter().all(|r| r.0 == true) && !query.is_empty() {
+        info!("All players report readiness");
+        app_state.set(ServerState::WaitingForPlayerLoadLevel).unwrap();
+    }
+}
+
+fn handle_level_loaded(
+    query: Query<&LevelLoaded>,
+    mut app_state: ResMut<State<ServerState>>,
     players: Res<Players>,
     mut turn_order: ResMut<TurnOrder>,
 ) {
     if query.iter().all(|r| r.0 == true) && !query.is_empty() {
-        info!("All players report readiness");
+        info!("All players report level loaded");
         let mut rng = rand::thread_rng();
         let mut random_order: Vec<u64> = players.players.keys().map(|f| *f).collect();
         random_order.shuffle(&mut rng);
         turn_order.order = VecDeque::from(random_order);
 
-        app_state.set(ServerState::WaitingForPlayerLoadLevel).unwrap();
+        app_state.set(ServerState::PlayerTurn).unwrap();
     }
 }
 
@@ -231,7 +254,9 @@ fn notify_players_load_level(
     info!("Players should load level: level.gltf#Scene0");
 
     for entity in &query {
-        commands.entity(entity).remove::<Readiness>();
+        commands.entity(entity)
+            .remove::<Readiness>()
+            .insert(LevelLoaded(false));
     }
 
     let message = bincode::serialize(&ServerMessage::LoadLevel(String::from("level.gltf#Scene0"))).unwrap();
