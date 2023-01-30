@@ -1,4 +1,4 @@
-use std::{net::UdpSocket, time::SystemTime, collections::VecDeque};
+use std::{net::UdpSocket, time::SystemTime, collections::VecDeque, io::Read};
 
 use bevy::prelude::*;
 use bevy_renet::{
@@ -225,8 +225,15 @@ fn next_turn(
 
 fn notify_players_load_level(
     mut server: ResMut<RenetServer>,
+    query: Query<Entity, With<Readiness>>,
+    mut commands: Commands,
 ) {
     info!("Players should load level: level.gltf#Scene0");
+
+    for entity in &query {
+        commands.entity(entity).remove::<Readiness>();
+    }
+
     let message = bincode::serialize(&ServerMessage::LoadLevel(String::from("level.gltf#Scene0"))).unwrap();
     server.broadcast_message(DefaultChannel::Reliable, message);
 }
