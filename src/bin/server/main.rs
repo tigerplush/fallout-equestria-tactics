@@ -17,7 +17,7 @@ use common::ServerState;
 
 fn main() {
     let mut app = App::new();
-    app.add_state(ServerState::WaitingForPlayers)
+    app.add_state(ServerState::WaitingForPlayerReadiness)
         .insert_resource(Players::new())
         .insert_resource(TurnOrder::new())
         .insert_resource(Map::generate(20, 20))

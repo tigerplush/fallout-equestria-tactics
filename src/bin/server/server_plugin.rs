@@ -30,8 +30,12 @@ impl Plugin for ServerPlugin {
             .add_system(handle_reliable_messages)
             .add_system(handle_unreliable_messages)
             .add_system_set(
-                SystemSet::on_update(ServerState::WaitingForPlayers)
+                SystemSet::on_update(ServerState::WaitingForPlayerReadiness)
                     .with_system(handle_readiness)
+            )
+            .add_system_set(
+                SystemSet::on_enter(ServerState::WaitingForPlayerLoadLevel)
+                    .with_system(notify_players_load_level)
             )
             .add_system_set(
                 SystemSet::on_enter(ServerState::PlayerTurn)
@@ -182,7 +186,8 @@ fn handle_readiness(
         let mut random_order: Vec<u64> = players.players.keys().map(|f| *f).collect();
         random_order.shuffle(&mut rng);
         turn_order.order = VecDeque::from(random_order);
-        app_state.set(ServerState::PlayerTurn).unwrap();
+
+        app_state.set(ServerState::WaitingForPlayerLoadLevel).unwrap();
     }
 }
 
@@ -216,4 +221,12 @@ fn next_turn(
     mut app_state: ResMut<State<ServerState>>,
 ) {
     app_state.set(ServerState::PlayerTurn).unwrap();
+}
+
+fn notify_players_load_level(
+    mut server: ResMut<RenetServer>,
+) {
+    info!("Players should load level: level.gltf#Scene0");
+    let message = bincode::serialize(&ServerMessage::LoadLevel(String::from("level.gltf#Scene0"))).unwrap();
+    server.broadcast_message(DefaultChannel::Reliable, message);
 }

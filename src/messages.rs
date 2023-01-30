@@ -8,6 +8,7 @@ pub enum ServerMessage {
     PlayerName(String),
     PlayerTurn(u64),
     PlayerNameChanged(u64, String),
+    LoadLevel(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]

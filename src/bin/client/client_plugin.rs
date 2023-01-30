@@ -7,7 +7,7 @@ use bevy_renet::{
     RenetClientPlugin,
 };
 use fallout_equestria_tactics::{
-    messages::{ServerMessage, ClientMessage}, resources::Players, PROTOCOL_ID, common::{Player, ServerEntity},
+    messages::{ServerMessage, ClientMessage}, resources::{Players, LevelName}, PROTOCOL_ID, common::{Player, ServerEntity},
 };
 
 use crate::common::ClientState;
@@ -50,6 +50,7 @@ fn handle_reliable_messages(
     mut players: ResMut<Players>,
     mut app_state: ResMut<State<ClientState>>,
     mut commands: Commands,
+    mut level_name: ResMut<LevelName>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -80,6 +81,11 @@ fn handle_reliable_messages(
                 else if app_state.current() != &ClientState::Idling {
                     app_state.set(ClientState::Idling).unwrap();
                 }
+            }
+            ServerMessage::LoadLevel(level) => {
+                info!("Shoud load level {}", level);
+                level_name.0 = level;
+                app_state.set(ClientState::LoadLevel).unwrap();
             }
             _ => (),
         }

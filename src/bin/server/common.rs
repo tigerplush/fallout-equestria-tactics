@@ -1,7 +1,8 @@
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ServerState {
-    WaitingForPlayers,
+    WaitingForPlayerReadiness,
+    WaitingForPlayerLoadLevel,
     PlayerTurn,
     NextTurn,
 }
