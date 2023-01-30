@@ -11,13 +11,13 @@ pub struct LevelLoaderPlugin;
 impl Plugin for LevelLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(ClientState::LoadLevel).with_system(load_level)
+            SystemSet::on_enter(ClientState::LoadingLevel).with_system(load_level)
         );
         app.add_system_set(
-            SystemSet::on_update(ClientState::LoadLevel).with_system(update_state)
+            SystemSet::on_update(ClientState::LoadingLevel).with_system(update_state)
         );
         app.add_system_set(
-            SystemSet::on_exit(ClientState::LoadLevel).with_system(notify_server)
+            SystemSet::on_exit(ClientState::LoadingLevel).with_system(notify_server)
         );
         info!("LevelLoaderPlugin has been loaded");
     }
@@ -41,21 +41,27 @@ fn load_level(
         }),
     })
     .insert(Name::from("Level"));
+
+    info!("Level {} loaded", level_name.0);
 }
 
 fn update_state(
-    query: Query<Entity, With<Spawnpoint>>,
+    query: Query<&Spawnpoint>,
     mut app_state: ResMut<State<ClientState>>,
 ) {
-    for entity in &query {
-        info!("spawnpoint detected {:?}", entity);
+    for _spawnpoint in &query {
+        info!("spawnpoint detected");
     }
-    app_state.set(ClientState::Idling).unwrap();
+    if !query.is_empty() {
+        info!("Exiting loading level state");
+        app_state.set(ClientState::LevelLoaded).unwrap();
+    }
 }
 
 fn notify_server(
     mut client: ResMut<RenetClient>,
 ) {
+    info!("Notifying server");
     let message = bincode::serialize(&ClientMessage::LevelLoaded).unwrap();
     client.send_message(DefaultChannel::Reliable, message);
 }

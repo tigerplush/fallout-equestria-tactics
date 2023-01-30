@@ -85,7 +85,7 @@ fn handle_reliable_messages(
             ServerMessage::LoadLevel(level) => {
                 info!("Shoud load level {}", level);
                 level_name.0 = level;
-                app_state.set(ClientState::LoadLevel).unwrap();
+                app_state.set(ClientState::LoadingLevel).unwrap();
             }
             _ => (),
         }
