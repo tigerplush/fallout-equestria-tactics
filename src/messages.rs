@@ -3,14 +3,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessage {
-    PlayerConnected(u64),
+    PlayerConnected(u64, Entity),
     PlayerDisconnected(u64),
     PlayerName(String),
     PlayerTurn(u64),
+    PlayerNameChanged(u64, String),
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ClientMessage {
     ClientReady,
+    ChangeName(String),
     EndTurn,
+}
+
+pub enum ChatMessage {
+    Public(String),
+    Private(u64, String),
 }

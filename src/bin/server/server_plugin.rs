@@ -26,8 +26,9 @@ impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(FoEServer::new())
             .add_plugin(RenetServerPlugin::default())
-            .add_system(handle_server_messages)
-            .add_system(handle_client_messages)
+            .add_system(handle_server_events)
+            .add_system(handle_reliable_messages)
+            .add_system(handle_unreliable_messages)
             .add_system_set(
                 SystemSet::on_update(ServerState::WaitingForPlayers)
                     .with_system(handle_readiness)
@@ -61,11 +62,12 @@ impl FoEServer {
     }
 }
 
-fn handle_server_messages(
+fn handle_server_events(
     mut server_events: EventReader<ServerEvent>,
     mut server: ResMut<RenetServer>,
     mut commands: Commands,
     mut players: ResMut<Players>,
+    query: Query<&Name>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -77,16 +79,19 @@ fn handle_server_messages(
                     .insert(Readiness(false))
                     .id();
 
-                //notify the connected player of all other players
-                for &player_id in players.players.keys() {
-                    let message = bincode::serialize(&ServerMessage::PlayerConnected(player_id)).unwrap();
+                for (&player_id, &server_entity) in players.players.iter() {
+                    let message = bincode::serialize(&ServerMessage::PlayerConnected(player_id, server_entity)).unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);
+
+                    let name = query.get(server_entity).unwrap();
+                    let message = bincode::serialize(&ServerMessage::PlayerNameChanged(player_id, name.into())).unwrap();
+                    server.send_message(*id, DefaultChannel::Unreliable, message);
                 }
 
                 players.players.insert(*id, entity);
 
                 // notify everyone of the new player
-                let message = bincode::serialize(&ServerMessage::PlayerConnected(*id)).unwrap();
+                let message = bincode::serialize(&ServerMessage::PlayerConnected(*id, entity)).unwrap();
                 server.broadcast_message(DefaultChannel::Reliable, message);
             }
             ServerEvent::ClientDisconnected(id) => {
@@ -103,21 +108,21 @@ fn handle_server_messages(
     }
 }
 
-fn handle_client_messages(
+fn handle_reliable_messages(
     mut server: ResMut<RenetServer>,
     players: Res<Players>,
     mut query: Query<&mut Readiness>,
-    mut app_state: ResMut<State<ServerState>>
+    mut app_state: ResMut<State<ServerState>>,
 ) {
     for client_id in server.clients_id().into_iter() {
-        if let Some(entity) = players.players.get(&client_id) {
+        if let Some(&entity) = players.get(&client_id) {
             while let Some(message) =
                 server.receive_message(client_id, DefaultChannel::Reliable)
             {
                 let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
-                let mut readiness = query.get_mut(*entity).unwrap();
                 match client_message {
                     ClientMessage::ClientReady => {
+                        let mut readiness = query.get_mut(entity).unwrap();
                         readiness.0 = !readiness.0;
                         info!(
                             "Player {} reports {}readiness",
@@ -132,6 +137,33 @@ fn handle_client_messages(
                         app_state.set(ServerState::NextTurn).unwrap();
                         return;
                     }
+                    _ => ()
+                }
+            }
+        }
+    }
+}
+
+fn handle_unreliable_messages(
+    mut server: ResMut<RenetServer>,
+    players: Res<Players>,
+    mut commands: Commands,
+) {
+    for client_id in server.clients_id().into_iter() {
+        if let Some(&entity) = players.get(&client_id) {
+            while let Some(message) =
+                server.receive_message(client_id, DefaultChannel::Unreliable)
+            {
+                let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
+                match client_message {
+                    ClientMessage::ChangeName(new_name) => {
+                        commands
+                            .entity(entity)
+                            .insert(Name::from(new_name.clone()));
+                        let message = bincode::serialize(&ServerMessage::PlayerNameChanged(client_id, new_name)).unwrap();
+                        server.broadcast_message(DefaultChannel::Unreliable, message);
+                    }
+                    _ => ()
                 }
             }
         }

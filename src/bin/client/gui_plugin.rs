@@ -77,6 +77,7 @@ fn setup_ready_button(
             ..default()
         })
         .insert(ReadyButton)
+        .insert(Name::from("Ready Button"))
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
                 "Ready",
@@ -140,6 +141,7 @@ fn setup_acting(
             ..default()
         })
         .insert(EndTurnButton)
+        .insert(Name::from("End Turn Button"))
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
                 "End Turn",
@@ -182,14 +184,35 @@ fn exit_acting(
     }
 }
 
-fn setup_idling() {
+#[derive(Component)]
+struct IdleText;
 
+fn setup_idling(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn(TextBundle::from_section(
+            "Waiting for enemy turn",
+            TextStyle {
+                font: asset_server.load("fonts/Overseer.otf"),
+                font_size: 46.0,
+                ..default()
+            },
+        ).with_text_alignment(TextAlignment::CENTER)
+    )
+    .insert(IdleText)
+    .insert(Name::from("Waiting Text"));
 }
 
 fn update_idling() {
 
 }
 
-fn exit_idling() {
-
+fn exit_idling(
+    mut commands: Commands,
+    query: Query<Entity, With<IdleText>>
+) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
+    }
 }

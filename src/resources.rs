@@ -17,6 +17,10 @@ impl Players {
             players: HashMap::new(),
         }
     }
+
+    pub fn get(&self, k: &u64) -> Option<&Entity> {
+        self.players.get(k)
+    }
 }
 
 #[derive(Resource)]

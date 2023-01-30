@@ -4,10 +4,10 @@ use bevy::prelude::*;
 
 use bevy_renet::{
     renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig},
-    run_if_client_connected, RenetClientPlugin,
+    RenetClientPlugin,
 };
 use fallout_equestria_tactics::{
-    messages::ServerMessage, resources::Players, PROTOCOL_ID, common::Player,
+    messages::{ServerMessage, ClientMessage}, resources::Players, PROTOCOL_ID, common::{Player, ServerEntity},
 };
 
 use crate::common::ClientState;
@@ -18,7 +18,8 @@ impl Plugin for ClientPlugin {
         app.add_plugin(RenetClientPlugin::default())
             .insert_resource(FoEClient::new())
             .insert_resource(Players::new())
-            .add_system(handle_messages.with_run_criteria(run_if_client_connected));
+            .add_system(handle_reliable_messages)
+            .add_system(handle_unreliable_messages);
         info!("ClientPlugin loaded");
     }
 }
@@ -44,7 +45,7 @@ impl FoEClient {
     }
 }
 
-fn handle_messages(
+fn handle_reliable_messages(
     mut client: ResMut<RenetClient>,
     mut players: ResMut<Players>,
     mut app_state: ResMut<State<ClientState>>,
@@ -53,13 +54,15 @@ fn handle_messages(
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
         match server_message {
-            ServerMessage::PlayerConnected(id) => {
+            ServerMessage::PlayerConnected(id, server_entity) => {
                 info!("{} connected", id);
                 let mut entity = commands
-                    .spawn_empty();
+                    .spawn(ServerEntity(server_entity));
 
                 if id == client.client_id() {
                     entity.insert(Player);
+                    let message = bincode::serialize(&ClientMessage::ChangeName("Fartbag".to_string())).unwrap();
+                    client.send_message(DefaultChannel::Unreliable, message);
                     app_state.set(ClientState::Connected).unwrap();
                 }
                 players.players.insert(id, entity.id());
@@ -76,6 +79,24 @@ fn handle_messages(
                 }
                 else if app_state.current() != &ClientState::Idling {
                     app_state.set(ClientState::Idling).unwrap();
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+fn handle_unreliable_messages(
+    mut client: ResMut<RenetClient>,
+    players: Res<Players>,
+    mut commands: Commands,
+) {
+    while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
+        let server_message = bincode::deserialize(&message).unwrap();
+        match server_message {
+            ServerMessage::PlayerNameChanged(id, new_name) => {
+                if let Some(&entity) = players.get(&id) {
+                    commands.entity(entity).insert(Name::from(new_name));
                 }
             }
             _ => (),

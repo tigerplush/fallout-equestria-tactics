@@ -9,6 +9,9 @@ pub struct Player;
 #[derive(Component, Deref, DerefMut)]
 pub struct CurrentPlayer(pub u64);
 
+#[derive(Component)]
+pub struct ServerEntity(pub Entity);
+
 pub struct Special {
     pub strength: u8,
     pub perception: u8,
