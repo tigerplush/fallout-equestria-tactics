@@ -2,6 +2,7 @@
 pub enum ClientState {
     WaitingToConnect,
     Connected,
+    LoadLevel,
     Idling,
     Acting,
 }

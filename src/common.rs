@@ -46,3 +46,6 @@ pub enum Race {
     Unicorn,
     Pegasus,
 }
+
+#[derive(Component)]
+pub struct Spawnpoint;

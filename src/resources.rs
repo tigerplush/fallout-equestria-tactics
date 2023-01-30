@@ -35,3 +35,12 @@ impl TurnOrder {
         }
     }
 }
+
+#[derive(Clone, Resource)]
+pub struct LevelName(pub String);
+
+impl Default for LevelName {
+    fn default() -> Self {
+        Self(String::new())
+    }
+}
