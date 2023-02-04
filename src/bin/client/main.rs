@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::{quick::WorldInspectorPlugin, egui::Key};
 use bevy_scene_hook::HookPlugin;
 
 mod client_plugin;
@@ -26,6 +26,7 @@ fn main() {
         .add_plugin(GuiPlugin)
         .add_plugin(HookPlugin)
         .add_startup_system(setup)
+        .add_system(move_camera)
         .add_startup_system(spawn_scene)
         .run();
 }
@@ -43,6 +44,35 @@ fn setup(
     });
 }
 
+const MOVE_SPEED: f32 = 8.0;
+
+fn move_camera(
+    key_input: Res<Input<KeyCode>>,
+    mut query: Query<&mut Transform, With<Camera>>,
+    time: Res<Time>,
+) {
+    let mut dir = Vec3::splat(0.0);
+    if key_input.pressed(KeyCode::A) {
+        dir.x += 1.0;
+        dir.z += 1.0;
+    }
+    if key_input.pressed(KeyCode::D) {
+        dir.x -= 1.0;
+        dir.z -= 1.0;
+    }
+    if key_input.pressed(KeyCode::W) {
+        dir.x -= 1.0;
+        dir.z += 1.0;
+    }
+    if key_input.pressed(KeyCode::S) {
+        dir.x += 1.0;
+        dir.z -= 1.0;
+    }
+
+    for mut transform in &mut query {
+        transform.translation += dir.normalize_or_zero() * time.delta_seconds() * MOVE_SPEED;
+    }
+}
 
 fn spawn_scene(
     mut commands: Commands,
