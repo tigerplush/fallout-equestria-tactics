@@ -9,6 +9,8 @@ pub enum ServerMessage {
     PlayerTurn(u64),
     PlayerNameChanged(u64, String),
     LoadLevel(String),
+    /// Assigns a spawnpoint in q, r, elevation
+    AssignSpawnpoint(i32, i32, i32),
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]

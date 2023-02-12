@@ -1,6 +1,6 @@
-use std::{net::UdpSocket, time::SystemTime, collections::VecDeque, io::Read};
+use std::{net::UdpSocket, time::SystemTime};
 
-use bevy::{prelude::*, log::Level};
+use bevy::prelude::*;
 use bevy_renet::{
     renet::{
         DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig,
@@ -9,7 +9,6 @@ use bevy_renet::{
     RenetServerPlugin,
 };
 
-use rand::seq::SliceRandom;
 
 use fallout_equestria_tactics::{
     common::{Readiness, CurrentPlayer, LevelLoaded},
@@ -32,14 +31,6 @@ impl Plugin for ServerPlugin {
             .add_system_set(
                 SystemSet::on_update(ServerState::WaitingForPlayerReadiness)
                     .with_system(handle_readiness)
-            )
-            .add_system_set(
-                SystemSet::on_enter(ServerState::WaitingForPlayerLoadLevel)
-                    .with_system(notify_players_load_level)
-            )
-            .add_system_set(
-                SystemSet::on_update(ServerState::WaitingForPlayerLoadLevel)
-                    .with_system(handle_level_loaded)
             )
             .add_system_set(
                 SystemSet::on_enter(ServerState::PlayerTurn)
@@ -197,23 +188,6 @@ fn handle_readiness(
     }
 }
 
-fn handle_level_loaded(
-    query: Query<&LevelLoaded>,
-    mut app_state: ResMut<State<ServerState>>,
-    players: Res<Players>,
-    mut turn_order: ResMut<TurnOrder>,
-) {
-    if query.iter().all(|r| r.0 == true) && !query.is_empty() {
-        info!("All players report level loaded");
-        let mut rng = rand::thread_rng();
-        let mut random_order: Vec<u64> = players.players.keys().map(|f| *f).collect();
-        random_order.shuffle(&mut rng);
-        turn_order.order = VecDeque::from(random_order);
-
-        app_state.set(ServerState::PlayerTurn).unwrap();
-    }
-}
-
 /// Runs once when PlayerTurn is entered
 fn handle_new_turn(
     mut server: ResMut<RenetServer>,
@@ -244,21 +218,4 @@ fn next_turn(
     mut app_state: ResMut<State<ServerState>>,
 ) {
     app_state.set(ServerState::PlayerTurn).unwrap();
-}
-
-fn notify_players_load_level(
-    mut server: ResMut<RenetServer>,
-    query: Query<Entity, With<Readiness>>,
-    mut commands: Commands,
-) {
-    info!("Players should load level: level.gltf#Scene0");
-
-    for entity in &query {
-        commands.entity(entity)
-            .remove::<Readiness>()
-            .insert(LevelLoaded(false));
-    }
-
-    let message = bincode::serialize(&ServerMessage::LoadLevel(String::from("level.gltf#Scene0"))).unwrap();
-    server.broadcast_message(DefaultChannel::Reliable, message);
 }

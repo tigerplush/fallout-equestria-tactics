@@ -1,5 +1,5 @@
-use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_inspector_egui::{quick::WorldInspectorPlugin, egui::Key};
+use bevy::{prelude::*, input::mouse::MouseWheel, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin}};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::{RapierContext, QueryFilter, RapierPhysicsPlugin, NoUserData};
 use bevy_scene_hook::HookPlugin;
 
@@ -23,6 +23,8 @@ fn main() {
         .insert_resource(CurrentZoom(0.0))
         .add_state(ClientState::WaitingToConnect)
         .add_plugins(DefaultPlugins)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(WorldInspectorPlugin)
         .add_plugin(ClientPlugin)
@@ -33,7 +35,6 @@ fn main() {
         .add_system(move_camera)
         .add_system(set_zoom)
         .add_system(cast_ray)
-        .add_startup_system(spawn_scene)
         .run();
 }
 
@@ -112,15 +113,6 @@ fn set_zoom(
             ortho.scale = current_zoom.get_mapped();
         }
     }
-}
-
-fn spawn_scene(
-    mut commands: Commands,
-) {
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
-    });
 }
 
 fn cast_ray(

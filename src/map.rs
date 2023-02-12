@@ -3,7 +3,7 @@ use std::{ops::Add, collections::HashMap};
 use bevy::prelude::*;
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
-struct AxialCoordinates {
+pub struct AxialCoordinates {
     pub q: i32,
     pub r: i32,
 }
@@ -43,6 +43,10 @@ impl AxialCoordinates {
             self + Self::LOWER_LEFT,
             self + Self::LEFT,
         ]
+    }
+
+    pub fn from_world(translation: Vec3) -> Self {
+        Self::new(0, 0)
     }
 }
 
