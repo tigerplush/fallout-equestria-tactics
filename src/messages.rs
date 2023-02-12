@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::map::AxialCoordinates;
+
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessage {
     PlayerConnected(u64, Entity),
@@ -10,7 +12,7 @@ pub enum ServerMessage {
     PlayerNameChanged(u64, String),
     LoadLevel(String),
     /// Assigns a spawnpoint in q, r, elevation
-    AssignSpawnpoint(i32, i32, i32),
+    AssignSpawnpoint(AxialCoordinates),
 }
 
 #[derive(Debug, Serialize, Deserialize, Component)]

@@ -11,7 +11,7 @@ use bevy_renet::{
 
 
 use fallout_equestria_tactics::{
-    common::{Readiness, CurrentPlayer, LevelLoaded},
+    common::{Readiness, CurrentPlayer, LevelLoaded, Player},
     messages::{ClientMessage, ServerMessage},
     resources::{Players, TurnOrder},
     PROTOCOL_ID,
@@ -74,7 +74,7 @@ fn handle_server_events(
                 info!("{} connected", id);
 
                 let entity = commands
-                    .spawn_empty()
+                    .spawn(Player(*id))
                     .insert(Readiness(false))
                     .id();
 

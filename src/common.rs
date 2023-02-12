@@ -7,7 +7,7 @@ pub struct Readiness(pub bool);
 pub struct LevelLoaded(pub bool);
 
 #[derive(Component)]
-pub struct Player;
+pub struct Player(pub u64);
 
 #[derive(Component, Deref, DerefMut)]
 pub struct CurrentPlayer(pub u64);

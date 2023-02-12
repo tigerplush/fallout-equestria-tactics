@@ -35,6 +35,7 @@ fn main() {
         .add_plugin(JsonAssetPlugin::<Names>::new(&["json.names"]))
         .add_plugin(LevelLoaderPlugin)
         .add_plugin(ServerPlugin)
+        .add_plugin(SpawnPlugin)
         .add_plugin(RngPlugin::default())
         .add_startup_system(setup);
 

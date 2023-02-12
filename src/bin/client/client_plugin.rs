@@ -61,7 +61,7 @@ fn handle_reliable_messages(
                     .spawn(ServerEntity(server_entity));
 
                 if id == client.client_id() {
-                    entity.insert(Player);
+                    entity.insert(Player(id));
                     let message = bincode::serialize(&ClientMessage::ChangeName("Fartbag".to_string())).unwrap();
                     client.send_message(DefaultChannel::Unreliable, message);
                     app_state.set(ClientState::Connected).unwrap();
@@ -86,6 +86,9 @@ fn handle_reliable_messages(
                 info!("Shoud load level {}", level);
                 level_name.0 = level;
                 app_state.set(ClientState::LoadingLevel).unwrap();
+            }
+            ServerMessage::AssignSpawnpoint(spawn_point) => {
+                info!("This players spawnpoint is {:?}", spawn_point);
             }
             _ => (),
         }

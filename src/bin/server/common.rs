@@ -1,4 +1,3 @@
-use bevy::prelude::Component;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum ServerState {
@@ -8,6 +7,3 @@ pub enum ServerState {
     PlayerTurn,
     NextTurn,
 }
-
-#[derive(Component)]
-pub struct Player(pub u64);

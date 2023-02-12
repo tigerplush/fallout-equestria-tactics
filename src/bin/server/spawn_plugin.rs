@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy_renet::renet::RenetServer;
-use fallout_equestria_tactics::{common::Spawnpoint, resources::Players, map::AxialCoordinates};
+use bevy_renet::renet::{RenetServer, DefaultChannel};
+use fallout_equestria_tactics::{common::{Spawnpoint, Player}, map::AxialCoordinates, messages::ServerMessage};
 
 use crate::common::ServerState;
 
@@ -16,12 +16,21 @@ impl Plugin for SpawnPlugin {
     }
 }
 
+/// Notifies players of their spawnpoint on the Default Reliable channel
 fn notify_players(
     query: Query<&Transform, With<Spawnpoint>>,
+    mut player_query: Query<&Player>,
     mut server: ResMut<RenetServer>,
-    players: Res<Players>
 ) {
+    info!("assigning spawn points");
+    let mut player_iter = player_query.iter_mut();
     for transform in &query {
-        let axial_coordinates = AxialCoordinates::from_world(transform.translation);
+        info!("assigning spawn point {:?}", transform);
+        if let Some(player) = player_iter.next() {
+            info!("assigning spawn point {:?} to {}", transform, player.0);
+            let axial_coordinates = AxialCoordinates::from_world(transform.translation);
+            let message = bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates)).unwrap();
+            server.send_message(player.0, DefaultChannel::Reliable, message);
+        }
     }
 }
