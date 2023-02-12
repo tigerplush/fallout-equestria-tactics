@@ -7,6 +7,7 @@ use crate::{common::Spawnpoint, resources::LevelName};
 #[derive(Resource)]
 pub struct AssetsLoading(pub Vec<HandleUntyped>);
 
+/// Loads a level and hooks unit components to the entities by name
 pub fn load_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -38,6 +39,7 @@ pub fn load_level(
     info!("Level {} loaded", level_name.0);
 }
 
+/// Finds all Mesh-handles and adds a [`RapierColliderHandle`] to them
 pub fn add_collider(
     query: Query<(Entity, &Handle<Mesh>), Without<RapierColliderHandle>>,
     meshes: Res<Assets<Mesh>>,
