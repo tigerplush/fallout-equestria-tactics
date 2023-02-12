@@ -38,7 +38,7 @@ fn handle_server_events(
     mut server: ResMut<RenetServer>,
     mut commands: Commands,
     mut players: ResMut<Players>,
-    query: Query<&Name>,
+    player_query: Query<(&Player, Entity, &Name)>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -46,11 +46,16 @@ fn handle_server_events(
                 let user_name = Username::from_user_data(user_data);
                 info!("{} ({}) connected", user_name.0, id);
 
-                let entity = commands.spawn(Player(*id)).insert(Readiness(false)).id();
+                let entity = commands
+                    .spawn(Player(*id))
+                    .insert(Readiness(false))
+                    .insert(Name::from(user_name.0.clone()))
+                    .id();
 
-                for (&player_id, &server_entity) in players.players.iter() {
+                for (player, server_entity, player_name) in &player_query {
                     let message = bincode::serialize(&ServerMessage::PlayerConnected(
-                        player_id,
+                        player.0,
+                        player_name.to_string(),
                         server_entity,
                     ))
                     .unwrap();
@@ -61,7 +66,7 @@ fn handle_server_events(
 
                 // notify everyone of the new player
                 let message =
-                    bincode::serialize(&ServerMessage::PlayerConnected(*id, entity)).unwrap();
+                    bincode::serialize(&ServerMessage::PlayerConnected(*id, user_name.0, entity)).unwrap();
                 server.broadcast_message(DefaultChannel::Reliable, message);
             }
             ServerEvent::ClientDisconnected(id) => {

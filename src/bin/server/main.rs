@@ -30,8 +30,8 @@ fn main() {
         .add_plugin(WorldInspectorPlugin)
         .add_plugin(HookPlugin)
         .add_plugin(InitPlugin)
-        .add_plugin(LobbyPlugin);
-        // .add_plugin(ServerPlugin)
+        .add_plugin(LobbyPlugin)
+        .add_plugin(ServerPlugin);
         // .add_plugin(SpawnPlugin)
         // .add_plugin(RngPlugin::default());
 

@@ -58,10 +58,12 @@ fn handle_reliable_messages(
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
         match server_message {
-            ServerMessage::PlayerConnected(id, server_entity) => {
+            ServerMessage::PlayerConnected(id, player_name, server_entity) => {
                 info!("{} connected", id);
-                let mut entity = commands.spawn(ServerEntity(server_entity));
+                let mut entity = commands
+                    .spawn(ServerEntity(server_entity));
 
+                entity.insert(Name::from(player_name));
                 if id == client.client_id() {
                     entity.insert(Player(id));
                     app_state.set(ClientState::Connected).unwrap();

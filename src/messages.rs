@@ -5,7 +5,7 @@ use crate::map::AxialCoordinates;
 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessage {
-    PlayerConnected(u64, Entity),
+    PlayerConnected(u64, String, Entity),
     PlayerDisconnected(u64),
     PlayerName(String),
     PlayerTurn(u64),
