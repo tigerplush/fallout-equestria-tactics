@@ -7,7 +7,10 @@ use bevy_renet::{
     RenetClientPlugin,
 };
 use fallout_equestria_tactics::{
-    messages::{ServerMessage, ClientMessage}, resources::{Players, LevelName}, PROTOCOL_ID, common::{Player, ServerEntity},
+    common::{Player, ServerEntity},
+    messages::{ClientMessage, ServerMessage},
+    resources::{LevelName, Players},
+    PROTOCOL_ID,
 };
 
 use crate::common::ClientState;
@@ -57,12 +60,13 @@ fn handle_reliable_messages(
         match server_message {
             ServerMessage::PlayerConnected(id, server_entity) => {
                 info!("{} connected", id);
-                let mut entity = commands
-                    .spawn(ServerEntity(server_entity));
+                let mut entity = commands.spawn(ServerEntity(server_entity));
 
                 if id == client.client_id() {
                     entity.insert(Player(id));
-                    let message = bincode::serialize(&ClientMessage::ChangeName("Fartbag".to_string())).unwrap();
+                    let message =
+                        bincode::serialize(&ClientMessage::ChangeName("Fartbag".to_string()))
+                            .unwrap();
                     client.send_message(DefaultChannel::Unreliable, message);
                     app_state.set(ClientState::Connected).unwrap();
                 }
@@ -77,8 +81,7 @@ fn handle_reliable_messages(
             ServerMessage::PlayerTurn(id) => {
                 if id == client.client_id() {
                     app_state.set(ClientState::Acting).unwrap();
-                }
-                else if app_state.current() != &ClientState::Idling {
+                } else if app_state.current() != &ClientState::Idling {
                     app_state.set(ClientState::Idling).unwrap();
                 }
             }

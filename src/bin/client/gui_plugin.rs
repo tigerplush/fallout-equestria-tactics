@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_renet::renet::{RenetClient, DefaultChannel};
+use bevy_renet::renet::{DefaultChannel, RenetClient};
 use fallout_equestria_tactics::messages::ClientMessage;
 
 use crate::common::ClientState;
@@ -10,48 +10,23 @@ impl Plugin for GuiPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(load_font);
         app.add_system_set(
-            SystemSet::on_enter(ClientState::Connected)
-            .with_system(setup_ready_button)
+            SystemSet::on_enter(ClientState::Connected).with_system(setup_ready_button),
         )
         .add_system_set(
-            SystemSet::on_update(ClientState::Connected)
-            .with_system(handle_ready_button)
+            SystemSet::on_update(ClientState::Connected).with_system(handle_ready_button),
         )
-        .add_system_set(
-            SystemSet::on_exit(ClientState::Connected)
-            .with_system(remove_read_button)
-        );
-        app.add_system_set(
-            SystemSet::on_enter(ClientState::Acting)
-            .with_system(setup_acting)
-        )
-        .add_system_set(
-            SystemSet::on_update(ClientState::Acting)
-            .with_system(update_acting)
-        )
-        .add_system_set(
-            SystemSet::on_exit(ClientState::Acting)
-            .with_system(exit_acting)
-        );
-        app.add_system_set(
-            SystemSet::on_enter(ClientState::Idling)
-            .with_system(setup_idling)
-        )
-        .add_system_set(
-            SystemSet::on_update(ClientState::Idling)
-            .with_system(update_idling)
-        )
-        .add_system_set(
-            SystemSet::on_exit(ClientState::Idling)
-            .with_system(exit_idling)
-        );
+        .add_system_set(SystemSet::on_exit(ClientState::Connected).with_system(remove_read_button));
+        app.add_system_set(SystemSet::on_enter(ClientState::Acting).with_system(setup_acting))
+            .add_system_set(SystemSet::on_update(ClientState::Acting).with_system(update_acting))
+            .add_system_set(SystemSet::on_exit(ClientState::Acting).with_system(exit_acting));
+        app.add_system_set(SystemSet::on_enter(ClientState::Idling).with_system(setup_idling))
+            .add_system_set(SystemSet::on_update(ClientState::Idling).with_system(update_idling))
+            .add_system_set(SystemSet::on_exit(ClientState::Idling).with_system(exit_idling));
         info!("GuiPlugin loaded");
     }
 }
 
-fn load_font() {
-
-}
+fn load_font() {}
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -60,10 +35,7 @@ const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 #[derive(Component)]
 struct ReadyButton;
 
-fn setup_ready_button(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn setup_ready_button(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(ButtonBundle {
             style: Style {
@@ -91,7 +63,10 @@ fn setup_ready_button(
 }
 
 fn handle_ready_button(
-    mut interaction_query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<Button>),
+    >,
     mut client: ResMut<RenetClient>,
 ) {
     for (interaction, mut background_color) in &mut interaction_query {
@@ -111,23 +86,16 @@ fn handle_ready_button(
     }
 }
 
-fn remove_read_button(
-    mut commands: Commands,
-    query: Query<Entity, With<ReadyButton>>,
-) {
+fn remove_read_button(mut commands: Commands, query: Query<Entity, With<ReadyButton>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-
 #[derive(Component)]
 struct EndTurnButton;
 
-fn setup_acting(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn setup_acting(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(ButtonBundle {
             style: Style {
@@ -155,7 +123,10 @@ fn setup_acting(
 }
 
 fn update_acting(
-    mut interaction_query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<EndTurnButton>)>,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<EndTurnButton>),
+    >,
     mut client: ResMut<RenetClient>,
 ) {
     for (interaction, mut background_color) in &mut interaction_query {
@@ -164,10 +135,10 @@ fn update_acting(
                 *background_color = PRESSED_BUTTON.into();
                 let message = bincode::serialize(&ClientMessage::EndTurn).unwrap();
                 client.send_message(DefaultChannel::Reliable, message);
-            },
+            }
             Interaction::Hovered => {
                 *background_color = HOVERED_BUTTON.into();
-            },
+            }
             Interaction::None => {
                 *background_color = NORMAL_BUTTON.into();
             }
@@ -175,10 +146,7 @@ fn update_acting(
     }
 }
 
-fn exit_acting(
-    mut commands: Commands,
-    query: Query<Entity, With<EndTurnButton>>
-) {
+fn exit_acting(mut commands: Commands, query: Query<Entity, With<EndTurnButton>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
@@ -187,31 +155,26 @@ fn exit_acting(
 #[derive(Component)]
 struct IdleText;
 
-fn setup_idling(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-    commands.spawn(TextBundle::from_section(
-            "Waiting for enemy turn",
-            TextStyle {
-                font: asset_server.load("fonts/Overseer.otf"),
-                font_size: 46.0,
-                ..default()
-            },
-        ).with_text_alignment(TextAlignment::CENTER)
-    )
-    .insert(IdleText)
-    .insert(Name::from("Waiting Text"));
+fn setup_idling(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn(
+            TextBundle::from_section(
+                "Waiting for enemy turn",
+                TextStyle {
+                    font: asset_server.load("fonts/Overseer.otf"),
+                    font_size: 46.0,
+                    ..default()
+                },
+            )
+            .with_text_alignment(TextAlignment::CENTER),
+        )
+        .insert(IdleText)
+        .insert(Name::from("Waiting Text"));
 }
 
-fn update_idling() {
+fn update_idling() {}
 
-}
-
-fn exit_idling(
-    mut commands: Commands,
-    query: Query<Entity, With<IdleText>>
-) {
+fn exit_idling(mut commands: Commands, query: Query<Entity, With<IdleText>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }

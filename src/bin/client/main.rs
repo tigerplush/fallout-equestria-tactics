@@ -1,8 +1,11 @@
-use bevy::{prelude::*, input::mouse::MouseWheel, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin}};
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    input::mouse::MouseWheel,
+    prelude::*,
+};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_rapier3d::prelude::{RapierContext, QueryFilter, RapierPhysicsPlugin, NoUserData};
+use bevy_rapier3d::prelude::{NoUserData, QueryFilter, RapierContext, RapierPhysicsPlugin};
 use bevy_scene_hook::HookPlugin;
-
 
 mod client_plugin;
 use client_plugin::*;
@@ -38,9 +41,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(10.0, 10.0, -10.0).looking_at(Vec3::ZERO, Vec3::Y),
         projection: Projection::Orthographic(OrthographicProjection {
@@ -104,10 +105,7 @@ fn move_camera(
     }
 }
 
-fn set_zoom(
-    mut query: Query<&mut Projection>,
-    current_zoom: Res<CurrentZoom>
-) {
+fn set_zoom(mut query: Query<&mut Projection>, current_zoom: Res<CurrentZoom>) {
     for mut projection in &mut query {
         if let Projection::Orthographic(ref mut ortho) = *projection {
             ortho.scale = current_zoom.get_mapped();
@@ -124,15 +122,10 @@ fn cast_ray(
     if mouse_input.just_pressed(MouseButton::Left) {
         info!("click");
         for (camera, camera_transform) in &cameras {
-            let (ray_pos, ray_dir) = ray_from_mouse_position(windows.get_primary().unwrap(), camera, camera_transform);
+            let (ray_pos, ray_dir) =
+                ray_from_mouse_position(windows.get_primary().unwrap(), camera, camera_transform);
             info!("Casting ray from {} along {}", ray_pos, ray_dir);
-            let hit = rapier_context.cast_ray(
-                ray_pos,
-                ray_dir,
-                f32::MAX,
-                true,
-                QueryFilter::new()
-            );
+            let hit = rapier_context.cast_ray(ray_pos, ray_dir, f32::MAX, true, QueryFilter::new());
 
             if let Some((entity, _toi)) = hit {
                 info!("Hit entity {:?}", entity);
@@ -151,7 +144,8 @@ fn ray_from_mouse_position(
     let x = 2.0 * (mouse_position.x / window.width() as f32) - 1.0;
     let y = 2.0 * (mouse_position.y / window.height() as f32) - 1.0;
 
-    let camera_inverse_matrix = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
+    let camera_inverse_matrix =
+        camera_transform.compute_matrix() * camera.projection_matrix().inverse();
     let near = camera_inverse_matrix * Vec3::new(x, y, -1.0).extend(1.0);
     let far = camera_inverse_matrix * Vec3::new(x, y, 1.0).extend(1.0);
 
