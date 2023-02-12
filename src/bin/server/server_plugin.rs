@@ -5,7 +5,7 @@ use bevy_renet::{
 };
 
 use fallout_equestria_tactics::{
-    common::{CurrentPlayer, LevelLoaded, Player, Readiness},
+    common::{CurrentPlayer, LevelLoaded, Player, Readiness, Username},
     messages::{ClientMessage, ServerMessage},
     resources::{Players, TurnOrder},
 };
@@ -42,8 +42,9 @@ fn handle_server_events(
 ) {
     for event in server_events.iter() {
         match event {
-            ServerEvent::ClientConnected(id, _) => {
-                info!("{} connected", id);
+            ServerEvent::ClientConnected(id, user_data) => {
+                let user_name = Username::from_user_data(user_data);
+                info!("{} ({}) connected", user_name.0, id);
 
                 let entity = commands.spawn(Player(*id)).insert(Readiness(false)).id();
 
@@ -54,14 +55,6 @@ fn handle_server_events(
                     ))
                     .unwrap();
                     server.send_message(*id, DefaultChannel::Reliable, message);
-
-                    let name = query.get(server_entity).unwrap();
-                    let message = bincode::serialize(&ServerMessage::PlayerNameChanged(
-                        player_id,
-                        name.into(),
-                    ))
-                    .unwrap();
-                    server.send_message(*id, DefaultChannel::Unreliable, message);
                 }
 
                 players.players.insert(*id, entity);
@@ -135,14 +128,6 @@ fn handle_unreliable_messages(
             {
                 let client_message: ClientMessage = bincode::deserialize(&message).unwrap();
                 match client_message {
-                    ClientMessage::ChangeName(new_name) => {
-                        commands.entity(entity).insert(Name::from(new_name.clone()));
-                        let message = bincode::serialize(&ServerMessage::PlayerNameChanged(
-                            client_id, new_name,
-                        ))
-                        .unwrap();
-                        server.broadcast_message(DefaultChannel::Unreliable, message);
-                    }
                     _ => (),
                 }
             }

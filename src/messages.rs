@@ -9,7 +9,6 @@ pub enum ServerMessage {
     PlayerDisconnected(u64),
     PlayerName(String),
     PlayerTurn(u64),
-    PlayerNameChanged(u64, String),
     LoadLevel(String),
     /// Assigns a spawnpoint in q, r, elevation
     AssignSpawnpoint(AxialCoordinates),

@@ -1,4 +1,4 @@
-use std::{net::UdpSocket, time::SystemTime};
+use std::{net::{UdpSocket, SocketAddr}, time::SystemTime};
 
 use bevy::prelude::*;
 
@@ -7,7 +7,7 @@ use bevy_renet::{
     RenetClientPlugin,
 };
 use fallout_equestria_tactics::{
-    common::{Player, ServerEntity},
+    common::{Player, ServerEntity, Username},
     messages::{ClientMessage, ServerMessage},
     resources::{LevelName, Players},
     PROTOCOL_ID,
@@ -19,7 +19,7 @@ pub struct ClientPlugin;
 impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default())
-            .insert_resource(FoEClient::new())
+            .insert_resource(FoEClient::new("127.0.0.1:5000".parse().unwrap(), &Username("fartbag".to_string())))
             .insert_resource(Players::new())
             .add_system(handle_reliable_messages)
             .add_system(handle_unreliable_messages);
@@ -30,19 +30,19 @@ impl Plugin for ClientPlugin {
 struct FoEClient;
 
 impl FoEClient {
-    fn new() -> RenetClient {
-        let server_addr = "127.0.0.1:5000".parse().unwrap();
+    fn new(server_addr: SocketAddr, user_name: &Username) -> RenetClient {
         let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
         let connection_config = RenetConnectionConfig::default();
         let current_time = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
         let client_id = current_time.as_millis() as u64;
+
         let authentication = ClientAuthentication::Unsecure {
             client_id,
             protocol_id: PROTOCOL_ID,
             server_addr,
-            user_data: None,
+            user_data: Some(user_name.to_netcode_user_data()),
         };
         RenetClient::new(current_time, socket, connection_config, authentication).unwrap()
     }
@@ -64,10 +64,6 @@ fn handle_reliable_messages(
 
                 if id == client.client_id() {
                     entity.insert(Player(id));
-                    let message =
-                        bincode::serialize(&ClientMessage::ChangeName("Fartbag".to_string()))
-                            .unwrap();
-                    client.send_message(DefaultChannel::Unreliable, message);
                     app_state.set(ClientState::Connected).unwrap();
                 }
                 players.players.insert(id, entity.id());
@@ -104,13 +100,8 @@ fn handle_unreliable_messages(
     mut commands: Commands,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let server_message = bincode::deserialize(&message).unwrap();
+        let server_message: ServerMessage = bincode::deserialize(&message).unwrap();
         match server_message {
-            ServerMessage::PlayerNameChanged(id, new_name) => {
-                if let Some(&entity) = players.get(&id) {
-                    commands.entity(entity).insert(Name::from(new_name));
-                }
-            }
             _ => (),
         }
     }
