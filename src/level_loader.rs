@@ -49,7 +49,7 @@ pub fn load_level(
     info!("Level {} loaded", level_name.0);
 }
 
-/// Finds all Mesh-handles and adds a [`RapierColliderHandle`] to them
+/// Finds all Mesh-handles and adds a [`RapierColliderHandle`] to them based on the loaded meshes
 pub fn add_collider(
     query: Query<(Entity, &Handle<Mesh>), Without<RapierColliderHandle>>,
     meshes: Res<Assets<Mesh>>,
@@ -71,6 +71,9 @@ pub fn add_collider(
     }
 }
 
+/// adds cuboid colliders to all aabb components.
+/// 
+/// This is slightly more performant than [`add_collider`]
 pub fn add_cuboid_collider(
     query: Query<(Entity, &Aabb), Without<RapierColliderHandle>>,
     mut commands: Commands,
