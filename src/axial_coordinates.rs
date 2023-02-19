@@ -46,14 +46,21 @@ impl AxialCoordinates {
         ]
     }
 
-    pub fn from_world(translation: Vec3) -> Self {
-        let q = (3.0_f32.sqrt() / 3.0 + translation.x - 1.0/3.0 * translation.z) / HEX_SIZE;
+    pub fn from_world(translation: Vec3) -> (Self, i32) {
+        let q = (3.0_f32.sqrt() / 3.0 * translation.x - 1.0/3.0 * translation.z) / HEX_SIZE;
         let r = (2.0/3.0 * translation.z) / HEX_SIZE;
-        Self::axial_round(q, r)
+        let elevation = translation.y.round() as i32;
+        (Self::axial_round(q, r), elevation)
     }
 
-    pub fn to_world(&self) -> Vec3 {
-        Vec3::splat(0.0)
+    pub fn to_world(&self, elevation: i32) -> Vec3 {
+        let x = HEX_SIZE * (3.0_f32.sqrt() * self.q as f32 + 3.0_f32.sqrt()/2.0 * self.r as f32);
+        let z = HEX_SIZE * (3.0/2.0 * self.r as f32);
+        Vec3::new(
+            x,
+            elevation as f32,
+            z
+        )
     }
 
     fn axial_round(q: f32, r: f32) -> Self {
@@ -78,4 +85,10 @@ impl From<CubeCoordinates<i32>> for AxialCoordinates {
             value.r
         )
     }
+}
+
+#[test]
+fn test_conversion() {
+    let world = Vec3::new(0.0, 0.0, 0.0);
+    assert_eq!(AxialCoordinates::from_world(world), (AxialCoordinates::new(0, 0), 0));
 }

@@ -54,6 +54,7 @@ fn handle_reliable_messages(
     mut app_state: ResMut<State<ClientState>>,
     mut commands: Commands,
     mut level_name: ResMut<LevelName>,
+    mut cameras: Query<&mut Transform, With<Camera>>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -90,6 +91,9 @@ fn handle_reliable_messages(
             }
             ServerMessage::AssignSpawnpoint(spawn_point, elevation) => {
                 info!("This players spawnpoint is {:?}, {:?}", spawn_point, elevation);
+                for mut camera in &mut cameras {
+                    camera.translation = camera.translation + spawn_point.to_world(elevation);
+                }
             }
             _ => (),
         }

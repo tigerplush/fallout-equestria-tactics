@@ -30,8 +30,7 @@ fn notify_players(
         info!("assigning spawn point {:?}", transform);
         if let Some(player) = player_iter.next() {
             info!("assigning spawn point {:?} to {}", transform, player.0);
-            let axial_coordinates = AxialCoordinates::from_world(transform.translation);
-            let elevation = transform.translation.y.round() as i32;
+            let (axial_coordinates, elevation) = AxialCoordinates::from_world(transform.translation);
             let message =
                 bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates, elevation)).unwrap();
             server.send_message(player.0, DefaultChannel::Reliable, message);
