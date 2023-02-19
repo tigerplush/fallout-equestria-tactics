@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_renet::renet::NETCODE_USER_DATA_BYTES;
 
-pub const HEX_SIZE: f32 = 1.0;
+pub const HEX_SIZE: f32 = 0.5;
 
 #[derive(Component)]
 pub struct Readiness(pub bool);
@@ -17,6 +17,9 @@ pub struct CurrentPlayer(pub u64);
 
 #[derive(Component)]
 pub struct ServerEntity(pub Entity);
+
+#[derive(Component)]
+pub struct OwnedBy(pub u64);
 
 pub struct Special {
     pub strength: u8,

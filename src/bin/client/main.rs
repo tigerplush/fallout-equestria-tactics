@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_rapier3d::prelude::{NoUserData, QueryFilter, RapierContext, RapierPhysicsPlugin};
+use bevy_rapier3d::prelude::{NoUserData, RapierPhysicsPlugin};
 use bevy_scene_hook::HookPlugin;
 
 mod camera_plugin;
@@ -28,6 +28,9 @@ use level_loader_plugin::LevelLoaderPlugin;
 mod lobby_plugin;
 use lobby_plugin::LobbyPlugin;
 
+mod spawn_plugin;
+use spawn_plugin::SpawnPlugin;
+
 fn main() {
     let mut app = App::new();
     app
@@ -39,10 +42,10 @@ fn main() {
         .add_plugin(ClientPlugin)
         .add_plugin(LevelLoaderPlugin)
         .add_plugin(LobbyPlugin)
+        .add_plugin(SpawnPlugin)
         .add_plugin(GuiPlugin)
         .add_plugin(InitPlugin)
-        .add_plugin(HookPlugin)
-        .add_system(cast_ray);
+        .add_plugin(HookPlugin);
 
     #[cfg(feature = "fps")]
     {
@@ -50,48 +53,8 @@ fn main() {
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default());
     }
+
     app
         .run();
 }
 
-fn cast_ray(
-    mouse_input: Res<Input<MouseButton>>,
-    cameras: Query<(&Camera, &GlobalTransform)>,
-    windows: Res<Windows>,
-    rapier_context: Res<RapierContext>,
-) {
-    if mouse_input.just_pressed(MouseButton::Left) {
-        info!("click");
-        for (camera, camera_transform) in &cameras {
-            let (ray_pos, ray_dir) =
-                ray_from_mouse_position(windows.get_primary().unwrap(), camera, camera_transform);
-            info!("Casting ray from {} along {}", ray_pos, ray_dir);
-            let hit = rapier_context.cast_ray(ray_pos, ray_dir, f32::MAX, true, QueryFilter::new());
-
-            if let Some((entity, _toi)) = hit {
-                info!("Hit entity {:?}", entity);
-            }
-        }
-    }
-}
-
-fn ray_from_mouse_position(
-    window: &Window,
-    camera: &Camera,
-    camera_transform: &GlobalTransform,
-) -> (Vec3, Vec3) {
-    let mouse_position = window.cursor_position().unwrap_or(Vec2::new(0.0, 0.0));
-
-    let x = 2.0 * (mouse_position.x / window.width() as f32) - 1.0;
-    let y = 2.0 * (mouse_position.y / window.height() as f32) - 1.0;
-
-    let camera_inverse_matrix =
-        camera_transform.compute_matrix() * camera.projection_matrix().inverse();
-    let near = camera_inverse_matrix * Vec3::new(x, y, -1.0).extend(1.0);
-    let far = camera_inverse_matrix * Vec3::new(x, y, 1.0).extend(1.0);
-
-    let near = near.truncate() / near.w;
-    let far = far.truncate() / far.w;
-    let dir: Vec3 = far - near;
-    (near, dir)
-}

@@ -66,6 +66,12 @@ impl AxialCoordinates {
     fn axial_round(q: f32, r: f32) -> Self {
         CubeCoordinates::from((q, r)).round().into()
     }
+
+    pub fn distance(&self, rhs: &AxialCoordinates) -> i32 {
+        let this = CubeCoordinates::from(self);
+        let other = CubeCoordinates::from(rhs);
+        this.distance(&other)
+    }
 }
 
 impl Add<AxialCoordinates> for AxialCoordinates {

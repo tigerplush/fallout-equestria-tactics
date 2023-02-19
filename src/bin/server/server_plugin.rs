@@ -90,6 +90,9 @@ fn handle_reliable_messages(
     mut query: Query<&mut Readiness>,
     mut app_state: ResMut<State<ServerState>>,
     mut level_loaded_query: Query<&mut LevelLoaded>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for client_id in server.clients_id().into_iter() {
         if let Some(&entity) = players.get(&client_id) {
@@ -116,6 +119,16 @@ fn handle_reliable_messages(
                         let mut level_loaded = level_loaded_query.get_mut(entity).unwrap();
                         level_loaded.0 = true;
                         info!("Player {} reports level loaded", client_id,);
+                    }
+                    ClientMessage::TrySpawnCharacter(coordinates, elevation) => {
+                        let entity = commands.spawn(PbrBundle {
+                            mesh: meshes.add(Mesh::from(shape::Capsule::default())),
+                            material: materials.add(StandardMaterial::default()),
+                            transform: Transform::from_translation(coordinates.to_world(elevation)),
+                            ..default()
+                        }).id();
+                        let message = bincode::serialize(&ServerMessage::SpawnCharacter(client_id, entity, coordinates, elevation)).unwrap();
+                        server.broadcast_message(DefaultChannel::Reliable, message);
                     }
                     _ => (),
                 }

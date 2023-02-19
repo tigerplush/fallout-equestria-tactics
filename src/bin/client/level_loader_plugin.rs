@@ -6,6 +6,7 @@ use fallout_equestria_tactics::level_loader::*;
 use fallout_equestria_tactics::messages::ClientMessage;
 
 use crate::common::ClientState;
+use crate::init_plugin::Cursor;
 
 pub struct LevelLoaderPlugin;
 
@@ -26,7 +27,7 @@ impl Plugin for LevelLoaderPlugin {
 }
 
 fn check_load_completed(
-    query: Query<Entity, (With<Handle<Mesh>>, Without<RapierColliderHandle>)>,
+    query: Query<Entity, (With<Handle<Mesh>>, (Without<RapierColliderHandle>, Without<Cursor>))>,
     asset_server: Res<AssetServer>,
     loading: Res<AssetsLoading>,
     mut app_state: ResMut<State<ClientState>>,

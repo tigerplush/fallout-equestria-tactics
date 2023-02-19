@@ -7,13 +7,13 @@ use bevy_renet::{
     RenetClientPlugin,
 };
 use fallout_equestria_tactics::{
-    common::{Player, ServerEntity, Username},
+    common::{Player, ServerEntity, Username, OwnedBy},
     messages::{ClientMessage, ServerMessage},
     resources::{LevelName, Players},
-    PROTOCOL_ID,
+    PROTOCOL_ID, axial_coordinates,
 };
 
-use crate::common::ClientState;
+use crate::common::{ClientState, PlayerSpawnpoint};
 pub struct ClientPlugin;
 
 impl Plugin for ClientPlugin {
@@ -60,6 +60,8 @@ fn handle_reliable_messages(
     mut commands: Commands,
     mut level_name: ResMut<LevelName>,
     mut cameras: Query<&mut Transform, With<Camera>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message = bincode::deserialize(&message).unwrap();
@@ -90,7 +92,7 @@ fn handle_reliable_messages(
                 }
             }
             ServerMessage::LoadLevel(level) => {
-                info!("Shoud load level {}", level);
+                info!("Should load level {}", level);
                 level_name.0 = level;
                 app_state.set(ClientState::LoadingLevel).unwrap();
             }
@@ -99,7 +101,19 @@ fn handle_reliable_messages(
                 for mut camera in &mut cameras {
                     camera.translation = camera.translation + spawn_point.to_world(elevation);
                 }
+                commands.insert_resource(PlayerSpawnpoint(spawn_point, elevation));
                 app_state.set(ClientState::SpawnPhase).unwrap();
+            }
+            ServerMessage::SpawnCharacter(client_id, entity,  coordinates, elevation) => {
+                commands.spawn(PbrBundle {
+                    mesh: meshes.add(Mesh::from(shape::Capsule::default())),
+                    material: materials.add(StandardMaterial::default()),
+                    transform: Transform::from_translation(coordinates.to_world(elevation) + Vec3::Y),
+                    ..default()
+                })
+                .insert(ServerEntity(entity))
+                .insert(OwnedBy(client_id))
+                .insert(Name::from("Character"));
             }
             _ => (),
         }

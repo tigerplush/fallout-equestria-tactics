@@ -1,6 +1,8 @@
+use std::ops::Sub;
+
+use bevy::prelude::shape::Cube;
+
 use crate::axial_coordinates::AxialCoordinates;
-
-
 
 pub struct CubeCoordinates<T> {
     pub q: T,
@@ -17,6 +19,13 @@ impl<T> CubeCoordinates<T> {
         }
     }
 }
+
+impl CubeCoordinates<i32> {
+    pub fn distance(&self, rhs: &Self) -> i32 {
+        std::cmp::max(std::cmp::max(self.q - rhs.q, self.r - rhs.r), self.s - rhs.s)
+    }
+}
+
 
 impl CubeCoordinates<f32>
 {
@@ -57,6 +66,16 @@ impl From<AxialCoordinates> for CubeCoordinates<i32> {
     }
 }
 
+impl From<&AxialCoordinates> for CubeCoordinates<i32> {
+    fn from(value: &AxialCoordinates) -> Self {
+        Self::new(
+            value.q,
+            value.r,
+            -value.q - value.r
+        )
+    }
+}
+
 impl From<(f32, f32)> for CubeCoordinates<f32> {
     fn from(value: (f32, f32)) -> Self {
         Self::new(
@@ -65,4 +84,20 @@ impl From<(f32, f32)> for CubeCoordinates<f32> {
             -value.0 - value.1
         )
     }
+}
+impl From<(i32, i32)> for CubeCoordinates<i32> {
+    fn from(value: (i32, i32)) -> Self {
+        Self::new(
+            value.0,
+            value.1,
+            -value.0 - value.1
+        )
+    }
+}
+
+#[test]
+fn distance() {
+    let a = CubeCoordinates::from((0, 0));
+    let b = CubeCoordinates::from((0, 1));
+    assert_eq!(a.distance(&b), 1);
 }
