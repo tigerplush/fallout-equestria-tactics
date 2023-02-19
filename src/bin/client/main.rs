@@ -1,7 +1,8 @@
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-};
+use bevy::prelude::*;
+
+#[cfg(feature = "fps")]
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::{NoUserData, QueryFilter, RapierContext, RapierPhysicsPlugin};
 use bevy_scene_hook::HookPlugin;
@@ -28,11 +29,10 @@ mod lobby_plugin;
 use lobby_plugin::LobbyPlugin;
 
 fn main() {
-    App::new()
+    let mut app = App::new();
+    app
         .add_state(ClientState::Init)
         .add_plugins(DefaultPlugins)
-        // .add_plugin(LogDiagnosticsPlugin::default())
-        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(WorldInspectorPlugin)
         .add_plugin(CameraPlugin)
@@ -42,7 +42,15 @@ fn main() {
         .add_plugin(GuiPlugin)
         .add_plugin(InitPlugin)
         .add_plugin(HookPlugin)
-        .add_system(cast_ray)
+        .add_system(cast_ray);
+
+    #[cfg(feature = "fps")]
+    {
+        app
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default());
+    }
+    app
         .run();
 }
 

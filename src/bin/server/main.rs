@@ -1,9 +1,12 @@
 
 use bevy::prelude::*;
+#[cfg(feature = "fps")]
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::{RapierPhysicsPlugin, NoUserData};
 use bevy_scene_hook::HookPlugin;
-use bevy_turborand::prelude::*;
+// use bevy_turborand::prelude::*;
 
 mod foe_server;
 
@@ -34,6 +37,13 @@ fn main() {
         .add_plugin(ServerPlugin)
         .add_plugin(SpawnPlugin);
         // .add_plugin(RngPlugin::default());
+
+    #[cfg(feature = "fps")]
+    {
+        app
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default());
+    }
 
     app.run();
 }

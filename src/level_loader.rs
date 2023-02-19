@@ -1,4 +1,4 @@
-use bevy::{asset::LoadState, prelude::*};
+use bevy::{asset::LoadState, prelude::*, render::primitives::Aabb};
 use bevy_rapier3d::prelude::{Collider, ComputedColliderShape, RapierColliderHandle};
 use bevy_scene_hook::{HookedSceneBundle, SceneHook};
 
@@ -36,6 +36,16 @@ pub fn load_level(
         })
         .insert(Name::from("Level"));
 
+    commands.spawn(DirectionalLightBundle {
+        transform: Transform::from_xyz(1.0, 10.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
+        directional_light: DirectionalLight {
+            illuminance: 25000.0,
+            color: Color::rgb_u8(255, 250, 240),
+            ..default()
+        },
+        ..default()
+    });
+
     info!("Level {} loaded", level_name.0);
 }
 
@@ -58,5 +68,15 @@ pub fn add_collider(
             }
             _ => (),
         }
+    }
+}
+
+pub fn add_cuboid_collider(
+    query: Query<(Entity, &Aabb), Without<RapierColliderHandle>>,
+    mut commands: Commands,
+) {
+    for (entity, aabb) in &query {
+        let coll = Collider::cuboid(aabb.half_extents.x, aabb.half_extents.y, aabb.half_extents.z);
+        commands.entity(entity).insert(coll);
     }
 }

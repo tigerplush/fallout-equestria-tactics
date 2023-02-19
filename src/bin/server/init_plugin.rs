@@ -1,6 +1,6 @@
 use std::{env::args, net::SocketAddr, time::Duration};
 
-use bevy::{prelude::*, app::ScheduleRunnerSettings, ecs::schedule::ShouldRun};
+use bevy::{prelude::*, app::ScheduleRunnerSettings};
 use fallout_equestria_tactics::{resources::*, level_loader::AssetsLoading};
 
 use crate::{common::ServerState, foe_server::FoEServer};

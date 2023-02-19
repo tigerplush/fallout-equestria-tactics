@@ -2,7 +2,7 @@ use bevy::{prelude::*, asset::LoadState};
 
 use bevy_rapier3d::prelude::RapierColliderHandle;
 use bevy_renet::renet::{RenetServer, DefaultChannel};
-use fallout_equestria_tactics::{level_loader::{add_collider, AssetsLoading, load_level}, common::{Readiness, LevelLoaded}, messages::ServerMessage, resources::{LevelName, Players}};
+use fallout_equestria_tactics::{level_loader::{add_collider, AssetsLoading, load_level}, common::{Readiness, LevelLoaded}, messages::ServerMessage, resources::LevelName};
 
 use crate::common::ServerState;
 pub struct LobbyPlugin;

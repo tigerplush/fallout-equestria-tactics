@@ -2,7 +2,6 @@ pub mod axial_coordinates;
 pub mod common;
 pub mod cube_coordinates;
 pub mod level_loader;
-pub mod map;
 pub mod messages;
 pub mod resources;
 

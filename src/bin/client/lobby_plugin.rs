@@ -17,14 +17,18 @@ impl Plugin for LobbyPlugin {
             SystemSet::on_update(
                 ClientState::Lobby)
                 .with_system(handle_ready_button)
+                .with_system(update_player_list)
         )
         .add_system_set(
             SystemSet::on_exit(ClientState::Lobby)
-            .with_system(remove_read_button)
+            .with_system(remove_lobby_canvas)
         );
         info!("LobbyPlugin has been loaded");
     }
 }
+
+#[derive(Component)]
+struct LobbyCanvas;
 
 #[derive(Component)]
 struct ReadyButton;
@@ -36,30 +40,53 @@ fn setup_lobby_canvas(
 ) {
     commands
         .entity(canvas.0)
-        .with_children(|parent| {
-            parent
-            .spawn(ButtonBundle {
+        .with_children(|lobby_canvas| {
+            lobby_canvas
+            .spawn(NodeBundle {
                 style: Style {
-                    size: Size::new(Val::Px(150.0), Val::Px(65.0)),
-                    align_items: AlignItems::Center,
-                    align_content: AlignContent::Center,
+                    size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                     justify_content: JustifyContent::Center,
+                    align_content: AlignContent::Center,
                     ..default()
                 },
-                background_color: NORMAL_BUTTON.into(),
                 ..default()
             })
-            .insert(ReadyButton)
-            .insert(Name::from("Ready Button"))
+            .insert(LobbyCanvas)
+            .insert(Name::from("LobbyCanvas"))
             .with_children(|parent| {
-                parent.spawn(TextBundle::from_section(
-                    "Ready",
-                    TextStyle {
-                        font: font_handle.0.clone(),
-                        font_size: 46.0,
+                parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        size: Size::new(Val::Percent(50.0), Val::Percent(50.0)),
                         ..default()
                     },
-                ));
+                    ..default()
+                });
+
+                parent
+                .spawn(ButtonBundle {
+                    style: Style {
+                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                        align_items: AlignItems::Center,
+                        align_content: AlignContent::Center,
+                        justify_content: JustifyContent::Center,
+                        ..default()
+                    },
+                    background_color: NORMAL_BUTTON.into(),
+                    ..default()
+                })
+                .insert(ReadyButton)
+                .insert(Name::from("Ready Button"))
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        "Ready",
+                        TextStyle {
+                            font: font_handle.0.clone(),
+                            font_size: 46.0,
+                            ..default()
+                        },
+                    ));
+                });
             });
         });
 }
@@ -97,7 +124,14 @@ fn handle_ready_button(
     }
 }
 
-fn remove_read_button(mut commands: Commands, query: Query<Entity, With<ReadyButton>>) {
+fn update_player_list() {
+
+}
+
+fn remove_lobby_canvas(
+    mut commands: Commands,
+    query: Query<Entity, With<LobbyCanvas>>
+) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
