@@ -2,10 +2,9 @@
 pub enum ClientState {
     Init,
     Lobby,
-    WaitingToConnect,
-    Connected,
     LoadingLevel,
     LevelLoaded,
+    SpawnPhase,
     Idling,
     Acting,
 }

@@ -8,14 +8,9 @@ pub struct GuiPlugin;
 
 impl Plugin for GuiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(load_font);
-        app.add_system_set(
-            SystemSet::on_enter(ClientState::Connected).with_system(setup_ready_button),
-        )
-        .add_system_set(
-            SystemSet::on_update(ClientState::Connected).with_system(handle_ready_button),
-        )
-        .add_system_set(SystemSet::on_exit(ClientState::Connected).with_system(remove_read_button));
+        app
+            .add_startup_system(load_font)
+            .add_startup_system(setup_canvas);
         app.add_system_set(SystemSet::on_enter(ClientState::Acting).with_system(setup_acting))
             .add_system_set(SystemSet::on_update(ClientState::Acting).with_system(update_acting))
             .add_system_set(SystemSet::on_exit(ClientState::Acting).with_system(exit_acting));
@@ -26,71 +21,43 @@ impl Plugin for GuiPlugin {
     }
 }
 
-fn load_font() {}
+#[derive(Resource)]
+pub struct FontHandle(pub Handle<Font>);
 
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
+fn load_font(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    commands.insert_resource(FontHandle(asset_server.load("fonts/Overseer.otf")));
+}
 
-#[derive(Component)]
-struct ReadyButton;
+#[derive(Resource)]
+pub struct Canvas(pub Entity);
 
-fn setup_ready_button(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn(ButtonBundle {
+fn setup_canvas (
+    mut commands: Commands
+) {
+    let entity = commands
+        .spawn(NodeBundle  {
             style: Style {
-                size: Size::new(Val::Px(150.0), Val::Px(65.0)),
-                align_items: AlignItems::Center,
-                align_content: AlignContent::Center,
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            background_color: NORMAL_BUTTON.into(),
             ..default()
         })
-        .insert(ReadyButton)
-        .insert(Name::from("Ready Button"))
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "Ready",
-                TextStyle {
-                    font: asset_server.load("fonts/Overseer.otf"),
-                    font_size: 46.0,
-                    ..default()
-                },
-            ));
-        });
+        .insert(Name::from("Canvas"))
+        .id();
+
+    commands.insert_resource(Canvas(entity));
 }
 
-fn handle_ready_button(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut client: ResMut<RenetClient>,
-) {
-    for (interaction, mut background_color) in &mut interaction_query {
-        match interaction {
-            Interaction::Clicked => {
-                *background_color = PRESSED_BUTTON.into();
-                let message = bincode::serialize(&ClientMessage::ClientReady).unwrap();
-                client.send_message(DefaultChannel::Reliable, message);
-            }
-            Interaction::Hovered => {
-                *background_color = HOVERED_BUTTON.into();
-            }
-            Interaction::None => {
-                *background_color = NORMAL_BUTTON.into();
-            }
-        }
-    }
-}
+pub const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
+pub const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
+pub const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
+pub const HOVERED_PRESSED_BUTTON: Color = Color::rgb(0.25, 0.65, 0.25);
+pub const HOVERED_PRESSED_BUTTON2: Color = Color::rgb(0.25, 0.55, 0.25);
 
-fn remove_read_button(mut commands: Commands, query: Query<Entity, With<ReadyButton>>) {
-    for entity in &query {
-        commands.entity(entity).despawn_recursive();
-    }
-}
 
 #[derive(Component)]
 struct EndTurnButton;

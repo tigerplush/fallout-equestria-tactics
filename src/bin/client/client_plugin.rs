@@ -19,7 +19,12 @@ pub struct ClientPlugin;
 impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default())
-            .insert_resource(FoEClient::new("127.0.0.1:5000".parse().unwrap(), &Username("fartbag".to_string())))
+            .insert_resource(
+                FoEClient::new(
+                    "127.0.0.1:5000".parse().unwrap(),
+                    &Username("fartbag".to_string())
+                )
+            )
             .insert_resource(Players::new())
             .add_system(handle_reliable_messages)
             .add_system(handle_unreliable_messages);
@@ -67,7 +72,7 @@ fn handle_reliable_messages(
                 entity.insert(Name::from(player_name));
                 if id == client.client_id() {
                     entity.insert(Player(id));
-                    app_state.set(ClientState::Connected).unwrap();
+                    app_state.set(ClientState::Lobby).unwrap();
                 }
                 players.players.insert(id, entity.id());
             }
@@ -94,6 +99,7 @@ fn handle_reliable_messages(
                 for mut camera in &mut cameras {
                     camera.translation = camera.translation + spawn_point.to_world(elevation);
                 }
+                app_state.set(ClientState::SpawnPhase).unwrap();
             }
             _ => (),
         }

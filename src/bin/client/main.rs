@@ -24,9 +24,12 @@ use init_plugin::InitPlugin;
 mod level_loader_plugin;
 use level_loader_plugin::LevelLoaderPlugin;
 
+mod lobby_plugin;
+use lobby_plugin::LobbyPlugin;
+
 fn main() {
     App::new()
-        .add_state(ClientState::WaitingToConnect)
+        .add_state(ClientState::Init)
         .add_plugins(DefaultPlugins)
         // .add_plugin(LogDiagnosticsPlugin::default())
         // .add_plugin(FrameTimeDiagnosticsPlugin::default())
@@ -35,6 +38,7 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(ClientPlugin)
         .add_plugin(LevelLoaderPlugin)
+        .add_plugin(LobbyPlugin)
         .add_plugin(GuiPlugin)
         .add_plugin(InitPlugin)
         .add_plugin(HookPlugin)
