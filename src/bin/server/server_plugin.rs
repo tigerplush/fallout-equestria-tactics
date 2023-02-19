@@ -20,14 +20,15 @@ impl Plugin for ServerPlugin {
             .add_system(handle_server_events)
             .add_system(handle_reliable_messages)
             .add_system(handle_unreliable_messages)
-            .add_system_set(SystemSet::on_update(ServerState::Lobby).with_system(handle_readiness))
             .add_system_set(
-                SystemSet::on_enter(ServerState::PlayerTurn).with_system(handle_new_turn),
+                SystemSet::on_enter(ServerState::PlayerTurn)
+                .with_system(handle_new_turn),
             )
             .add_system_set(
                 //todo: this should be on enter, but changing a state on enter crashes
                 // maybe resetting a state works? eliminate NextTurn altogether?
-                SystemSet::on_update(ServerState::NextTurn).with_system(next_turn),
+                SystemSet::on_update(ServerState::NextTurn)
+                .with_system(next_turn),
             );
         info!("ServerPlugin has been loaded");
     }
@@ -49,6 +50,7 @@ fn handle_server_events(
                 let entity = commands
                     .spawn(Player(*id))
                     .insert(Readiness(false))
+                    .insert(LevelLoaded(false))
                     .insert(Name::from(user_name.0.clone()))
                     .id();
 
@@ -140,14 +142,6 @@ fn handle_unreliable_messages(
     }
 }
 
-fn handle_readiness(query: Query<&Readiness>, mut app_state: ResMut<State<ServerState>>) {
-    if query.iter().all(|r| r.0 == true) && !query.is_empty() {
-        info!("All players report readiness");
-        app_state
-            .set(ServerState::WaitingForPlayerLoadLevel)
-            .unwrap();
-    }
-}
 
 /// Runs once when PlayerTurn is entered
 fn handle_new_turn(

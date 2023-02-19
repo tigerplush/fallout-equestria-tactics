@@ -31,8 +31,8 @@ fn main() {
         .add_plugin(HookPlugin)
         .add_plugin(InitPlugin)
         .add_plugin(LobbyPlugin)
-        .add_plugin(ServerPlugin);
-        // .add_plugin(SpawnPlugin)
+        .add_plugin(ServerPlugin)
+        .add_plugin(SpawnPlugin);
         // .add_plugin(RngPlugin::default());
 
     app.run();
