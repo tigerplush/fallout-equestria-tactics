@@ -1,13 +1,13 @@
-use bevy::{prelude::*, asset::LoadState};
-use bevy_rapier3d::prelude::{RapierColliderHandle, Collider, ComputedColliderShape};
+use bevy::{asset::LoadState, prelude::*};
+use bevy_rapier3d::prelude::{Collider, ComputedColliderShape, RapierColliderHandle};
 use bevy_scene_hook::{HookedSceneBundle, SceneHook};
 
 use crate::{common::Spawnpoint, resources::LevelName};
 
-
 #[derive(Resource)]
 pub struct AssetsLoading(pub Vec<HandleUntyped>);
 
+/// Loads a level and hooks unit components to the entities by name
 pub fn load_level(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -18,40 +18,45 @@ pub fn load_level(
 
     loading.0.push(level_handle.clone_untyped());
 
-    commands.spawn(HookedSceneBundle {
-        scene: SceneBundle {
-            scene: level_handle,
-            ..default()
-        },
-        hook: SceneHook::new(|entity, cmds| {
-            match entity.get::<Name>().map(|t| t.as_str().split('.').collect::<Vec<&str>>()[0]) {
-                Some("Spawnpoint") => cmds.insert(Spawnpoint),
-                _ => cmds,
-            };
-        }),
-    })
-    .insert(Name::from("Level"));
+    commands
+        .spawn(HookedSceneBundle {
+            scene: SceneBundle {
+                scene: level_handle,
+                ..default()
+            },
+            hook: SceneHook::new(|entity, cmds| {
+                match entity
+                    .get::<Name>()
+                    .map(|t| t.as_str().split('.').collect::<Vec<&str>>()[0])
+                {
+                    Some("Spawnpoint") => cmds.insert(Spawnpoint),
+                    _ => cmds,
+                };
+            }),
+        })
+        .insert(Name::from("Level"));
 
     info!("Level {} loaded", level_name.0);
 }
 
+/// Finds all Mesh-handles and adds a [`RapierColliderHandle`] to them
 pub fn add_collider(
     query: Query<(Entity, &Handle<Mesh>), Without<RapierColliderHandle>>,
     meshes: Res<Assets<Mesh>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
-)
-{
+) {
     for (entity, mesh) in &query {
         match asset_server.get_load_state(mesh) {
             LoadState::Loaded => {
                 let collider = Collider::from_bevy_mesh(
                     meshes.get(mesh).unwrap(),
                     &ComputedColliderShape::TriMesh,
-                ).unwrap();
+                )
+                .unwrap();
                 commands.entity(entity).insert(collider);
             }
-            _ => ()
+            _ => (),
         }
     }
 }

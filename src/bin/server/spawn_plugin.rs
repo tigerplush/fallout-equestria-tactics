@@ -1,6 +1,10 @@
 use bevy::prelude::*;
-use bevy_renet::renet::{RenetServer, DefaultChannel};
-use fallout_equestria_tactics::{common::{Spawnpoint, Player}, map::AxialCoordinates, messages::ServerMessage};
+use bevy_renet::renet::{DefaultChannel, RenetServer};
+use fallout_equestria_tactics::{
+    common::{Player, Spawnpoint},
+    map::AxialCoordinates,
+    messages::ServerMessage,
+};
 
 use crate::common::ServerState;
 
@@ -9,8 +13,7 @@ pub struct SpawnPlugin;
 impl Plugin for SpawnPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(ServerState::SpawnPhase)
-                .with_system(notify_players)
+            SystemSet::on_enter(ServerState::SpawnPhase).with_system(notify_players),
         );
         info!("SpawnPlugin has been loaded");
     }
@@ -29,7 +32,8 @@ fn notify_players(
         if let Some(player) = player_iter.next() {
             info!("assigning spawn point {:?} to {}", transform, player.0);
             let axial_coordinates = AxialCoordinates::from_world(transform.translation);
-            let message = bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates)).unwrap();
+            let message =
+                bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates)).unwrap();
             server.send_message(player.0, DefaultChannel::Reliable, message);
         }
     }

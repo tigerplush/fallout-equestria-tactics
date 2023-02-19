@@ -5,11 +5,10 @@ use crate::map::AxialCoordinates;
 
 #[derive(Debug, Serialize, Deserialize, Component)]
 pub enum ServerMessage {
-    PlayerConnected(u64, Entity),
+    PlayerConnected(u64, String, Entity),
     PlayerDisconnected(u64),
     PlayerName(String),
     PlayerTurn(u64),
-    PlayerNameChanged(u64, String),
     LoadLevel(String),
     /// Assigns a spawnpoint in q, r, elevation
     AssignSpawnpoint(AxialCoordinates),

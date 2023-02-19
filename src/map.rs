@@ -1,7 +1,7 @@
-use std::{ops::Add, collections::HashMap};
+use std::{collections::HashMap, ops::Add};
 
 use bevy::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct AxialCoordinates {
@@ -19,11 +19,7 @@ impl AxialCoordinates {
     pub const LEFT: AxialCoordinates = Self::new(-1, 0, 0);
 
     pub const fn new(q: i32, r: i32, elevation: i32) -> Self {
-        Self {
-            q,
-            r,
-            elevation,
-        }
+        Self { q, r, elevation }
     }
 
     pub const fn directions() -> [AxialCoordinates; 6] {
@@ -64,7 +60,7 @@ impl Add<AxialCoordinates> for AxialCoordinates {
         Self::Output {
             q: self.q + rhs.q,
             r: self.r + rhs.r,
-            elevation: self.elevation + rhs.elevation
+            elevation: self.elevation + rhs.elevation,
         }
     }
 }
@@ -81,9 +77,9 @@ struct Tile {
 
 #[derive(Resource)]
 pub struct Map {
-     tiles: HashMap<AxialCoordinates, Tile>,
-     width: i32,
-     depth: i32,
+    tiles: HashMap<AxialCoordinates, Tile>,
+    width: i32,
+    depth: i32,
 }
 
 impl Map {
@@ -93,7 +89,7 @@ impl Map {
         for w in -width..width {
             for d in -depth..depth {
                 let tile = Tile {
-                    coordinates: AxialCoordinates::new(w, d,0),
+                    coordinates: AxialCoordinates::new(w, d, 0),
                     tile_type: TileType::Passable(1.0),
                 };
                 tiles.insert(tile.coordinates, tile);
