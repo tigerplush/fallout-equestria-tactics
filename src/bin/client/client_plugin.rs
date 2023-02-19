@@ -88,8 +88,8 @@ fn handle_reliable_messages(
                 level_name.0 = level;
                 app_state.set(ClientState::LoadingLevel).unwrap();
             }
-            ServerMessage::AssignSpawnpoint(spawn_point) => {
-                info!("This players spawnpoint is {:?}", spawn_point);
+            ServerMessage::AssignSpawnpoint(spawn_point, elevation) => {
+                info!("This players spawnpoint is {:?}, {:?}", spawn_point, elevation);
             }
             _ => (),
         }

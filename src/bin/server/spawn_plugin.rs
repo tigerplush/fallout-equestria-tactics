@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use bevy_renet::renet::{DefaultChannel, RenetServer};
 use fallout_equestria_tactics::{
     common::{Player, Spawnpoint},
-    map::AxialCoordinates,
-    messages::ServerMessage,
+    messages::ServerMessage, axial_coordinates::AxialCoordinates,
 };
 
 use crate::common::ServerState;
@@ -32,8 +31,9 @@ fn notify_players(
         if let Some(player) = player_iter.next() {
             info!("assigning spawn point {:?} to {}", transform, player.0);
             let axial_coordinates = AxialCoordinates::from_world(transform.translation);
+            let elevation = transform.translation.y.round() as i32;
             let message =
-                bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates)).unwrap();
+                bincode::serialize(&ServerMessage::AssignSpawnpoint(axial_coordinates, elevation)).unwrap();
             server.send_message(player.0, DefaultChannel::Reliable, message);
         }
     }

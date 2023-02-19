@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_renet::renet::NETCODE_USER_DATA_BYTES;
 
+pub const HEX_SIZE: f32 = 1.0;
+
 #[derive(Component)]
 pub struct Readiness(pub bool);
 
